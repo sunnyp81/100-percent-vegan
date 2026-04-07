@@ -1,0 +1,16 @@
+name = "100-percent-vegan"
+main = "src/index.ts"
+compatibility_date = "2024-04-03"
+
+[env.production]
+name = "100-percent-vegan"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "100-percent-vegan"
+database_id = ""
+preview_database_id = ""
+
+[build]
+command = "npm run build"
+cwd = "."
