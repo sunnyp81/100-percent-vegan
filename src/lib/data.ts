@@ -1,21 +1,17 @@
 import { eq, desc, like, or, and, sql } from "drizzle-orm";
 import { products } from "./schema";
+import { db } from "./db";
 
-export type DB = any;
-
-export async function getPublishedProduct(db: DB, barcode: string) {
-  const result = await db
+export async function getPublishedProduct(dbInstance: typeof db, barcode: string) {
+  return dbInstance
     .select()
     .from(products)
-    .where(
-      and(eq(products.barcode, barcode), eq(products.publishStatus, "published"))
-    )
+    .where(and(eq(products.barcode, barcode), eq(products.publishStatus, "published")))
     .get();
-  return result || null;
 }
 
-export async function getRecentProducts(db: DB, limit = 20) {
-  return db
+export async function getRecentProducts(dbInstance: typeof db, limit = 20) {
+  return dbInstance
     .select()
     .from(products)
     .where(eq(products.publishStatus, "published"))
@@ -24,8 +20,8 @@ export async function getRecentProducts(db: DB, limit = 20) {
     .all();
 }
 
-export async function searchProducts(db: DB, query: string, limit = 20) {
-  return db
+export async function searchProducts(dbInstance: typeof db, query: string, limit = 20) {
+  return dbInstance
     .select()
     .from(products)
     .where(
@@ -42,17 +38,17 @@ export async function searchProducts(db: DB, query: string, limit = 20) {
     .all();
 }
 
-export async function getAllPublishedBarcodes(db: DB) {
-  const results = await db
+export async function getAllPublishedBarcodes(dbInstance: typeof db) {
+  const results = await dbInstance
     .select({ barcode: products.barcode })
     .from(products)
     .where(eq(products.publishStatus, "published"))
     .all();
-  return results.map((r: any) => r.barcode);
+  return results.map((r) => r.barcode);
 }
 
-export async function getPublishedCount(db: DB) {
-  const result = await db
+export async function getPublishedCount(dbInstance: typeof db) {
+  const result = await dbInstance
     .select({ count: sql<number>`count(*)` })
     .from(products)
     .where(eq(products.publishStatus, "published"))

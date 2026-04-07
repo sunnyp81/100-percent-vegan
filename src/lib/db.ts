@@ -1,15 +1,10 @@
-import { drizzle } from "drizzle-orm/d1";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-// Type exports for Cloudflare environment
-export type CloudflareEnv = {
-  DB: any; // D1Database type from Cloudflare runtime
-  CRON_SECRET?: string;
-};
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-// For use in Next.js on Cloudflare Pages
-// D1 binding is passed via context in the runtime
-
-export function getDb(db: any) {
-  return drizzle(db, { schema });
-}
+export const db = drizzle(client, { schema });

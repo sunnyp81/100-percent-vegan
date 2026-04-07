@@ -1,38 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dripPublishProducts } from "@/lib/drip-logic";
-import type { CloudflareEnv } from "@/lib/db";
+import { db } from "@/lib/db";
+import { products } from "@/lib/schema";
+import { eq, sql } from "drizzle-orm";
+
+const MIN_DRIP = 10;
+const MAX_DRIP = 25;
 
 export async function POST(request: NextRequest) {
-  // Cloudflare Cron Trigger validation
-  const cronSecret = request.headers.get("cf-cron");
-  const envSecret = process.env.CRON_SECRET;
-
-  if (!envSecret || cronSecret !== envSecret) {
+  const cronSecret = request.headers.get("x-cron-secret");
+  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Get D1 binding from Cloudflare context
-    const env = (process.env as any) as CloudflareEnv;
-    if (!env.DB) {
-      return NextResponse.json(
-        { error: "D1 database not configured" },
-        { status: 500 }
-      );
+    const count = Math.floor(Math.random() * (MAX_DRIP - MIN_DRIP + 1)) + MIN_DRIP;
+
+    const drafts = await db
+      .select({ id: products.id })
+      .from(products)
+      .where(eq(products.publishStatus, "draft"))
+      .orderBy(sql`RANDOM()`)
+      .limit(count);
+
+    for (const draft of drafts) {
+      await db
+        .update(products)
+        .set({ publishStatus: "published", publishDate: new Date(), updatedAt: new Date() })
+        .where(eq(products.id, draft.id));
     }
 
-    const result = await dripPublishProducts(env.DB);
-
-    return NextResponse.json({
-      success: true,
-      ...result,
-      message: `Published ${result.published} products at ${new Date().toISOString()}`,
-    });
+    return NextResponse.json({ success: true, published: drafts.length });
   } catch (error) {
-    console.error("Drip error:", error);
-    return NextResponse.json(
-      { error: String(error), success: false },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
