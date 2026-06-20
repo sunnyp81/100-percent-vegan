@@ -41,3 +41,20 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# leak-scan: appended 2026-05-01
+.env
+.env.*
+.env.local
+.env.production
+*.key
+credentials.json
+credentials*.json
+secrets.*
+.wrangler/
+.vercel/
+.next/cache/
+wordpress-config.md
+master-builds.md
+node_modules/
+dist/
